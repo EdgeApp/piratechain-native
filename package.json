@@ -1,6 +1,6 @@
 {
-  "name": "react-native-pirate-wallet",
-  "version": "0.3.6",
+  "name": "piratechain-native",
+  "version": "0.0.1",
   "description": "React Native wrapper for the Pirate Unified Wallet native SDK surfaces",
   "keywords": [
     "react-native",
@@ -16,8 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PirateNetwork/Stashi-Wallet.git",
-    "directory": "bindings/react-native-pirate-wallet"
+    "url": "git+https://github.com/EdgeApp/piratechain-native.git"
   },
   "author": "Pirate Chain Contributors",
   "license": "MIT",

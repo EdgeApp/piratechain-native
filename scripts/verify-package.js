@@ -6,7 +6,7 @@ const path = require("path");
 const packageRoot = path.resolve(__dirname, "..");
 
 function fail(message) {
-  console.error(`[react-native-pirate-wallet] ${message}`);
+  console.error(`[piratechain-native] ${message}`);
   process.exitCode = 1;
 }
 
@@ -42,7 +42,7 @@ const packageJson = JSON.parse(
   fs.readFileSync(path.join(packageRoot, "package.json"), "utf8")
 );
 
-if (packageJson.name !== "react-native-pirate-wallet") {
+if (packageJson.name !== "piratechain-native") {
   fail(`Unexpected package name: ${packageJson.name}`);
 }
 if (!/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(packageJson.version)) {
@@ -55,7 +55,7 @@ if (packageJson.private === true) {
 }
 if (
   packageJson.repository?.url !==
-  "git+https://github.com/PirateNetwork/Stashi-Wallet.git"
+  "git+https://github.com/EdgeApp/piratechain-native.git"
 ) {
   fail(
     "The repository URL must match the GitHub repository used for npm provenance"
@@ -69,7 +69,7 @@ if (packageJson.publishConfig?.access !== "public") {
   "LICENSE-MIT",
   "README.md",
   "react-native.config.js",
-  "react-native-pirate-wallet.podspec",
+  "piratechain-native.podspec",
   "scripts/assemble-ios-framework.js",
   "scripts/resolve-android-packages.js",
   "test/smoke.js",
@@ -90,25 +90,20 @@ if (process.argv.includes("--publish-layout")) {
   ].forEach(rejectPath);
 }
 
-const binaryPackageNames = [
-  "react-native-pirate-wallet-android",
-  "react-native-pirate-wallet-android-x86_64",
-  "react-native-pirate-wallet-ios-device",
-  "react-native-pirate-wallet-ios-simulator-arm64",
-  "react-native-pirate-wallet-ios-simulator-x86_64",
-];
-for (const binaryPackageName of binaryPackageNames) {
-  if (
-    packageJson.optionalDependencies?.[binaryPackageName] !==
-    packageJson.version
-  ) {
-    fail(`${binaryPackageName} must use the same exact version as the wrapper`);
-  }
-}
+// Upstream asserted that each binary package pinned the wrapper's exact
+// version. This fork versions independently of the Pirate team's releases, so
+// that equality can never hold. The binary packages themselves go away once the
+// native artifacts are built from source.
 
+// The xcframework is gitignored and built by `build-native-ios`, so a fresh
+// checkout has none. Check it when it is there; requiring it unconditionally
+// would fail every developer who has not run a native build yet.
 if (
   !process.argv.includes("--publish-layout") &&
-  (process.platform === "darwin" || process.argv.includes("--all-platforms"))
+  (process.platform === "darwin" || process.argv.includes("--all-platforms")) &&
+  fs.existsSync(
+    path.join(packageRoot, "ios", "Frameworks", "PirateWalletNative.xcframework")
+  )
 ) {
   const staticLibraries = collectFiles(
     path.join(
@@ -135,13 +130,22 @@ if (
   }
 }
 
+// Upstream resolved the Android jniLibs from two sibling packages in its own
+// monorepo. This fork is a standalone repository, so those siblings do not
+// exist and the packages are not installed by default; the artifacts come from
+// `build-native-android` instead. Check the pair when they are resolvable, so
+// the assertion still means something for anyone who has them, and skip it
+// otherwise rather than failing a clean checkout.
 try {
   const { resolveAndroidJniLibsPaths } = require("./resolve-android-packages");
-  if (resolveAndroidJniLibsPaths().length !== 2) {
+  const jniLibsPaths = resolveAndroidJniLibsPaths();
+  if (jniLibsPaths.length !== 2) {
     fail("Both Android binary packages must resolve");
   }
 } catch (error) {
-  fail(error.message);
+  if (!/is required to build/.test(error.message)) {
+    fail(error.message);
+  }
 }
 
 if (process.exitCode) {

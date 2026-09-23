@@ -1,10 +1,38 @@
-# react-native-pirate-wallet
+# piratechain-native
 
-`react-native-pirate-wallet` is the React Native wrapper for the unified Pirate wallet backend.
+`piratechain-native` is Edge's Pirate Chain wallet package. It exposes one JS
+API over the Pirate Unified Light Wallet native service layer, for React Native
+and — unlike the upstream binding — for Node, so the Edge CLI can drive an ARRR
+wallet with no React Native present.
 
-It exposes one JS API over the same native service layer used by the Android SDK and iOS SDK.
+## Relationship to upstream
 
-The package is meant for React Native wallets such as Edge Wallet.
+This package is a fork of `bindings/react-native-pirate-wallet` from
+[PirateNetwork/Pirate-Unified-Light-Wallet](https://github.com/PirateNetwork/Pirate-Unified-Light-Wallet)
+at tag **v1.2.3** (`73560800f0d3c73a0de7932c4cf1e7e2222228d1`), MIT licensed.
+The first commit in this repository is that tree, verbatim, so the Edge changes
+are a clean diff against it.
+
+The Rust core is built from source at that same revision for every target, so
+the Node addon, the iOS xcframework and the Android jniLibs can never drift
+against each other.
+
+## Names that must not be renamed
+
+The rename to `piratechain-native` covers the npm package, the podspec and the
+documentation. It deliberately stops short of five names, because each is a
+binary or bridge contract with the pinned Rust core:
+
+| Name | Why it is fixed |
+| --- | --- |
+| Kotlin package `com.pirate.wallet.reactnative` | the core exports `Java_com_pirate_wallet_reactnative_NativeBridge_invokeJson` |
+| `NativeBridge` object | same JNI symbol |
+| `invokeJson` method | same JNI symbol |
+| `libpirate_ffi_native.so` | the library name `System.loadLibrary` asks for |
+| React Native module `PirateWalletReactNative` | the key `RCT_EXPORT_MODULE` and the JS lookup agree on |
+
+Renaming any of them produces an `UnsatisfiedLinkError` or a missing native
+module at first call, which no unit test catches — it surfaces only on a device.
 
 Repo-level build and integration notes:
 
