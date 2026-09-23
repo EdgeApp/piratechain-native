@@ -2,6 +2,7 @@ node_modules/
 coverage/
 .nyc_output/
 tmp/
+rust/target/
 
 # Native build outputs. These are produced by the build-native-* scripts and
 # shipped through `files` + `prepublishOnly`, never committed — the same
