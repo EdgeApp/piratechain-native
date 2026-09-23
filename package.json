@@ -44,7 +44,9 @@
     "verify:package": "node scripts/verify-package.js",
     "prepare:native": "node scripts/assemble-ios-framework.js",
     "prepack": "node scripts/verify-package.js --publish-layout",
-    "verify": "npm run verify:package && npm run test:seed && npm test"
+    "verify": "npm run verify:package && npm run test:seed && npm test",
+    "build-native-host": "node -r sucrase/register ./scripts/build-native-host.ts",
+    "smoke-node": "node -r sucrase/register ./scripts/smoke-node.ts"
   },
   "engines": {
     "node": ">=18"
@@ -63,8 +65,11 @@
     "access": "public"
   },
   "devDependencies": {
+    "@types/node": "^20.12.7",
     "chai": "^4.3.10",
     "mocha": "^10.4.0",
-    "nyc": "^15.1.0"
+    "nyc": "^15.1.0",
+    "sucrase": "^3.35.0",
+    "typescript": "^5.4.5"
   }
 }

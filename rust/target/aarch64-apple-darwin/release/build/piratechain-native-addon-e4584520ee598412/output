@@ -1,0 +1,14 @@
+cargo::rustc-check-cfg=cfg(napi_wasi_threads)
+cargo:rerun-if-env-changed=DEBUG_GENERATED_CODE
+cargo:rerun-if-env-changed=TYPE_DEF_TMP_PATH
+cargo:rerun-if-env-changed=CARGO_CFG_NAPI_RS_CLI_VERSION
+cargo::rerun-if-env-changed=NAPI_DEBUG_GENERATED_CODE
+cargo::rerun-if-env-changed=NAPI_TYPE_DEF_TMP_FOLDER
+cargo::rerun-if-env-changed=NAPI_FORCE_BUILD_PIRATECHAIN_NATIVE_ADDON
+cargo:rustc-cdylib-link-arg=-Wl
+cargo:rustc-cdylib-link-arg=-undefined
+cargo:rustc-cdylib-link-arg=dynamic_lookup
+cargo:rustc-link-search=native=/Users/paul/git/piratechain-native/tmp/pirate/crates/target/aarch64-apple-darwin/release
+cargo:rustc-link-lib=static=pirate_ffi_native
+cargo:rerun-if-changed=/Users/paul/git/piratechain-native/tmp/pirate/crates/target/aarch64-apple-darwin/release
+cargo:rerun-if-env-changed=PIRATE_FFI_LIB_DIR
