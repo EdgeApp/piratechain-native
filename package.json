@@ -1,0 +1,64 @@
+{
+  "name": "react-native-pirate-wallet",
+  "version": "0.3.6",
+  "description": "React Native wrapper for the Pirate Unified Wallet native SDK surfaces",
+  "keywords": [
+    "react-native",
+    "pirate-chain",
+    "cryptocurrency",
+    "wallet",
+    "privacy",
+    "shielded"
+  ],
+  "homepage": "https://github.com/PirateNetwork/Pirate-Unified-Light-Wallet/tree/main/bindings/react-native-pirate-wallet#readme",
+  "bugs": {
+    "url": "https://github.com/PirateNetwork/Pirate-Unified-Light-Wallet/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PirateNetwork/Stashi-Wallet.git",
+    "directory": "bindings/react-native-pirate-wallet"
+  },
+  "author": "Pirate Chain Contributors",
+  "license": "MIT",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "files": [
+    "android/build.gradle",
+    "android/consumer-rules.pro",
+    "android/src/main/AndroidManifest.xml",
+    "android/src/main/java/",
+    "ios/PirateWalletReactNative.m",
+    "ios/PirateWalletReactNative.swift",
+    "src/",
+    "scripts/",
+    "test/",
+    "LICENSE-MIT",
+    "README.md",
+    "package.json",
+    "react-native.config.js",
+    "react-native-pirate-wallet.podspec"
+  ],
+  "scripts": {
+    "test": "node test/smoke.js",
+    "verify:package": "node scripts/verify-package.js",
+    "prepare:native": "node scripts/assemble-ios-framework.js",
+    "prepack": "node scripts/verify-package.js --publish-layout"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "react-native": ">=0.71.0 <1.0.0"
+  },
+  "optionalDependencies": {
+    "react-native-pirate-wallet-android": "0.3.6",
+    "react-native-pirate-wallet-android-x86_64": "0.3.6",
+    "react-native-pirate-wallet-ios-device": "0.3.6",
+    "react-native-pirate-wallet-ios-simulator-arm64": "0.3.6",
+    "react-native-pirate-wallet-ios-simulator-x86_64": "0.3.6"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

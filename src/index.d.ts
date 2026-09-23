@@ -1,0 +1,352 @@
+export type SyncMode = 'Compact' | 'Deep'
+export type SynchronizerStatus = 'STOPPED' | 'SYNCING' | 'SYNCED'
+export type AmountString = string
+export type AmountInput = AmountString | number | bigint
+export type MnemonicLanguage =
+  | 'english'
+  | 'chinese_simplified'
+  | 'chinese_traditional'
+  | 'french'
+  | 'italian'
+  | 'japanese'
+  | 'korean'
+  | 'spanish'
+
+export interface MnemonicInspection {
+  isValid: boolean
+  detectedLanguage: MnemonicLanguage | null
+  ambiguousLanguages: MnemonicLanguage[]
+  wordCount: number
+}
+
+export interface WalletMeta {
+  id: string
+  name: string
+  createdAt: number
+  watchOnly: boolean
+  birthdayHeight: number
+  networkType?: 'mainnet' | 'testnet' | 'regtest' | null
+}
+
+export interface SynchronizerConfig {
+  syncMode?: SyncMode
+  syncingPollIntervalMs?: number
+  syncedPollIntervalMs?: number
+  errorPollIntervalMs?: number
+  transactionLimit?: number | null
+}
+
+export interface PirateWalletAccountStorageConfig {
+  accountId: string
+  passphrase: string
+  storagePath?: string | null
+}
+
+export interface PirateWalletSecureAccountStorageConfig {
+  accountId: string
+  storagePath?: string | null
+}
+
+export interface LightdEndpointConfig {
+  host: string
+  port: number
+  useTls: boolean
+  tlsPin: string | null
+  label: string | null
+  automaticFailover: boolean
+  failoverEndpoints: string[]
+  isConfigured: boolean
+}
+
+export interface SetLightdEndpointRequest {
+  walletId: string
+  url: string
+  tlsPin?: string | null
+}
+
+export interface SetLightdEndpointPoolRequest extends SetLightdEndpointRequest {
+  failoverEndpoints: string[]
+}
+
+export interface TestLightdEndpointRequest {
+  url: string
+  tlsPin?: string | null
+}
+
+export interface NodeTestResult {
+  success: boolean
+  latestBlockHeight: number | null
+  transportMode: string
+  tlsEnabled: boolean
+  tlsPinMatched: boolean | null
+  expectedPin: string | null
+  actualPin: string | null
+  errorMessage: string | null
+  responseTimeMs: number
+  serverVersion: string | null
+  chainName: string | null
+}
+
+export type SpendabilityReasonCode =
+  | 'OK'
+  | 'ERR_SYNC_FINALIZING'
+  | 'ERR_WITNESS_REPAIR_QUEUED'
+  | 'ERR_RESCAN_REQUIRED'
+
+export interface SpendabilityStatus {
+  spendable: boolean
+  rescanRequired: boolean
+  targetHeight: number
+  anchorHeight: number
+  validatedAnchorHeight: number
+  repairQueued: boolean
+  reasonCode: SpendabilityReasonCode
+}
+
+export interface WalletSigningStatus {
+  protectionEnabled: boolean
+  unlocked: boolean
+}
+
+export interface EndpointHealthDiagnostic {
+  endpoint: string
+  healthy: boolean
+  active: boolean
+  tipHeight: number | null
+  latencyMs: number | null
+  reason: string | null
+}
+
+export interface EndpointPoolDiagnostics {
+  walletId: string
+  configuredEndpoint: string
+  activeEndpoint: string | null
+  automaticFailover: boolean
+  endpoints: EndpointHealthDiagnostic[]
+}
+
+export interface Acknowledgement {
+  acknowledged: true
+}
+
+export interface SynchronizerSnapshot {
+  walletId: string
+  alias: string
+  status: SynchronizerStatus
+  progressPercent: number
+  syncStatus: any
+  latestBirthdayHeight: number | null
+  balance: Balance | null
+  transactions: TransactionInfo[]
+  updatedAtMillis: number | null
+  lastError: Error | null
+}
+
+export interface SynchronizerCallbacks {
+  onStatusChanged?(event: { walletId: string; alias: string; name: SynchronizerStatus }): void
+  onUpdate?(snapshot: SynchronizerSnapshot): void
+  onError?(error: Error): void
+}
+
+export interface PaymentDisclosure {
+  disclosureType: 'sapling' | 'ironwood' | string
+  txid: string
+  outputIndex: number
+  address: string
+  amount: AmountString
+  memo: string | null
+  disclosure: string
+}
+
+export interface PaymentDisclosureVerification {
+  disclosureType: 'sapling' | 'ironwood' | string
+  txid: string
+  outputIndex: number
+  address: string
+  amount: AmountString
+  memo: string | null
+  memoHex: string
+}
+
+export interface TransactionOutput {
+  addr: string
+  amount: AmountInput
+  memo?: string | null
+}
+
+export interface Balance {
+  total: AmountString
+  spendable: AmountString
+  pending: AmountString
+}
+
+export interface ShieldedPoolBalances {
+  sapling: Balance
+  ironwood: Balance
+}
+
+export interface TransactionInfo {
+  txid: string
+  height: number | null
+  timestamp: number
+  amount: AmountString
+  fee: AmountString
+  memo: string | null
+  confirmed: boolean
+}
+
+export interface TransactionRecipient {
+  address: string
+  pool: string
+  amount: AmountString
+  outputIndex: number
+  memo: string | null
+  paymentDisclosure?: string | null
+}
+
+export interface TransactionDetails {
+  txid: string
+  height: number | null
+  timestamp: number
+  amount: AmountString
+  fee: AmountString
+  confirmed: boolean
+  memo: string | null
+  recipients: TransactionRecipient[]
+}
+
+export interface PendingTransaction {
+  id: string
+  outputs: TransactionOutput[]
+  totalAmount: AmountString
+  fee: AmountString
+  change: AmountString
+  inputTotal: AmountString
+  numInputs: number
+  expiryHeight: number
+  createdAt: number
+}
+
+export interface FeeInfo {
+  defaultFee: AmountString
+  minFee: AmountString
+  maxFee: AmountString
+  feePerOutput: AmountString
+  memoFeeMultiplier: number
+}
+
+export class PirateWalletAdvancedKeyManagement {
+  listKeyGroups(walletId: string): Promise<any[]>
+  exportKeyGroupKeys(walletId: string, keyId: number): Promise<any>
+  importSpendingKey(
+    requestOrWalletId: any,
+    birthdayHeight?: number | null,
+    saplingSpendingKey?: string | null,
+    ironwoodSpendingKey?: string | null
+  ): Promise<number>
+  exportSeed(walletId: string, mnemonicLanguage?: MnemonicLanguage | null): Promise<string>
+}
+
+export class PirateWalletSynchronizer {
+  constructor(sdk: PirateWalletSdk, walletId: string, config?: SynchronizerConfig)
+  walletId: string
+  config: SynchronizerConfig
+  status: SynchronizerStatus
+  progress: number
+  syncStatus: any
+  latestBirthdayHeight: number | null
+  balance: any
+  transactions: any[]
+  lastError: Error | null
+  currentSnapshot(): SynchronizerSnapshot
+  isRunning(): boolean
+  isSyncing(): boolean
+  isComplete(): boolean
+  start(): Promise<void>
+  stop(): Promise<void>
+  refresh(): Promise<SynchronizerSnapshot>
+  close(): Promise<void>
+  subscribe(callbacks?: SynchronizerCallbacks): () => void
+}
+
+export class PirateWalletSdk {
+  advancedKeyManagement: PirateWalletAdvancedKeyManagement
+  invoke(requestJson: string, pretty?: boolean): Promise<string>
+  configureAccountStorage(config: PirateWalletAccountStorageConfig): Promise<any>
+  configureSecureAccountStorage(config: PirateWalletSecureAccountStorageConfig): Promise<any>
+  createSynchronizer(walletId: string, config?: SynchronizerConfig): PirateWalletSynchronizer
+  buildInfoJson(pretty?: boolean): Promise<string>
+  buildInfo(): Promise<any>
+  walletRegistryExists(): Promise<boolean>
+  listWallets(): Promise<WalletMeta[]>
+  getActiveWalletId(): Promise<string | null>
+  getActiveWallet(): Promise<WalletMeta | null>
+  getWallet(walletId: string): Promise<WalletMeta | null>
+  createWallet(requestOrName: any, birthdayHeight?: number | null, mnemonicLanguage?: MnemonicLanguage | null): Promise<string>
+  restoreWallet(requestOrName: any, mnemonic?: string, birthdayHeight?: number | null, mnemonicLanguage?: MnemonicLanguage | null): Promise<string>
+  importViewingWallet(requestOrName: any, saplingViewingKey?: string | null, ironwoodViewingKey?: string | null, birthdayHeight?: number): Promise<string>
+  switchWallet(walletId: string): Promise<any>
+  renameWallet(walletId: string, newName: string): Promise<any>
+  deleteWallet(walletId: string): Promise<any>
+  setWalletBirthdayHeight(walletId: string, birthdayHeight: number): Promise<any>
+  getLatestBirthdayHeight(walletId: string): Promise<number | null>
+  generateMnemonic(wordCount?: number | null, mnemonicLanguage?: MnemonicLanguage | null): Promise<string>
+  validateMnemonic(mnemonic: string, mnemonicLanguage?: MnemonicLanguage | null): Promise<boolean>
+  inspectMnemonic(mnemonic: string): Promise<MnemonicInspection>
+  getNetworkInfo(): Promise<any>
+  isValidShieldedAddr(address: string): Promise<boolean>
+  validateAddress(address: string): Promise<any>
+  validateConsensusBranch(walletId: string): Promise<any>
+  getLightdEndpoint(walletId: string): Promise<string>
+  getLightdEndpointConfig(walletId: string): Promise<LightdEndpointConfig>
+  getLightdEndpointPoolDiagnostics(walletId: string): Promise<EndpointPoolDiagnostics>
+  setLightdEndpoint(request: SetLightdEndpointRequest): Promise<Acknowledgement>
+  setLightdEndpoint(walletId: string, url: string, tlsPin?: string | null): Promise<Acknowledgement>
+  setLightdEndpointPool(request: SetLightdEndpointPoolRequest): Promise<Acknowledgement>
+  setLightdEndpointPool(
+    walletId: string,
+    url: string,
+    failoverEndpoints: string[],
+    tlsPin?: string | null
+  ): Promise<Acknowledgement>
+  testLightdEndpoint(request: TestLightdEndpointRequest): Promise<NodeTestResult>
+  testLightdEndpoint(url: string, tlsPin?: string | null): Promise<NodeTestResult>
+  formatAmount(arrrtoshis: AmountInput): Promise<string>
+  parseAmount(arrr: string): Promise<AmountString>
+  getCurrentReceiveAddress(walletId: string): Promise<string>
+  getCurrentAddress(walletId: string): Promise<string>
+  getNextReceiveAddress(walletId: string): Promise<string>
+  getNextAddress(walletId: string): Promise<string>
+  listAddresses(walletId: string): Promise<any[]>
+  listAddressBalances(walletId: string, keyId?: number | null): Promise<any[]>
+  getBalance(walletId: string): Promise<Balance>
+  getShieldedPoolBalances(walletId: string): Promise<ShieldedPoolBalances>
+  getSpendabilityStatus(walletId: string): Promise<SpendabilityStatus>
+  enableWalletSigningProtection(walletId: string, sessionCredential: string): Promise<WalletSigningStatus>
+  unlockWalletSigning(walletId: string, sessionCredential: string): Promise<WalletSigningStatus>
+  lockWalletSigning(walletId: string): Promise<WalletSigningStatus>
+  lockAllWalletSigning(): Promise<Acknowledgement>
+  getWalletSigningStatus(walletId: string): Promise<WalletSigningStatus>
+  listTransactions(walletId: string, limit?: number | null): Promise<TransactionInfo[]>
+  fetchTransactionMemo(walletId: string, txId: string, outputIndex?: number | null): Promise<string | null>
+  getTransactionDetails(walletId: string, txId: string): Promise<TransactionDetails | null>
+  exportPaymentDisclosures(walletId: string, txId: string): Promise<PaymentDisclosure[]>
+  exportSaplingPaymentDisclosure(walletId: string, txId: string, outputIndex: number): Promise<string>
+  exportIronwoodPaymentDisclosure(walletId: string, txId: string, actionIndex: number): Promise<string>
+  verifyPaymentDisclosure(walletId: string, disclosure: string): Promise<PaymentDisclosureVerification>
+  getFeeInfo(): Promise<FeeInfo>
+  startSync(walletIdOrRequest: any, mode?: SyncMode): Promise<any>
+  getSyncStatus(walletId: string): Promise<any>
+  cancelSync(walletId: string): Promise<any>
+  rescan(walletIdOrRequest: any, fromHeight?: number | null): Promise<any>
+  buildTransaction(walletIdOrRequest: any, outputs?: TransactionOutput | TransactionOutput[] | null, fee?: AmountInput | null): Promise<PendingTransaction>
+  signTransaction(walletId: string, pending: PendingTransaction): Promise<any>
+  broadcastTransaction(walletId: string, signed: any): Promise<string>
+  send(walletId: string, outputsOrOutput: TransactionOutput | TransactionOutput[], fee?: AmountInput | null): Promise<string>
+  exportSaplingViewingKey(walletId: string): Promise<string>
+  exportIronwoodViewingKey(walletId: string): Promise<string>
+  importSaplingViewingKeyAsWatchOnly(requestOrName: any, saplingViewingKey?: string | null, birthdayHeight?: number | null): Promise<string>
+  getWatchOnlyCapabilities(walletId: string): Promise<any>
+}
+
+export function createPirateWalletSdk(): PirateWalletSdk

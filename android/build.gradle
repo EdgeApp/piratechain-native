@@ -1,0 +1,82 @@
+buildscript {
+  def kotlinVersion = rootProject.ext.has('kotlinVersion')
+    ? rootProject.ext.get('kotlinVersion')
+    : '2.2.21'
+
+  repositories {
+    google()
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath 'com.android.tools.build:gradle:8.13.2'
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}"
+  }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+def safeExtGet(prop, fallback) {
+  rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}
+
+def androidBinaryPackages = [
+  'react-native-pirate-wallet-android',
+  'react-native-pirate-wallet-android-x86_64',
+]
+def androidJniLibsDirs = androidBinaryPackages.collect { packageName ->
+  def candidates = [
+    file("../node_modules/${packageName}/android/src/main/jniLibs"),
+    file("../../${packageName}/android/src/main/jniLibs"),
+  ]
+  def jniLibsDir = candidates.find { it.isDirectory() }
+  if (jniLibsDir == null) {
+    throw new GradleException(
+      "${packageName} must be installed before building Android"
+    )
+  }
+  jniLibsDir
+}
+
+android {
+  namespace "com.pirate.wallet.reactnative"
+  compileSdkVersion safeExtGet('compileSdkVersion', 36)
+
+  defaultConfig {
+    minSdkVersion safeExtGet('minSdkVersion', 24)
+    targetSdkVersion safeExtGet('targetSdkVersion', 36)
+    consumerProguardFiles 'consumer-rules.pro'
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+
+  kotlinOptions {
+    jvmTarget = '17'
+  }
+
+  sourceSets {
+    main {
+      jniLibs.srcDirs androidJniLibsDirs
+    }
+  }
+
+  lintOptions {
+    abortOnError false
+  }
+}
+
+repositories {
+  google()
+  mavenCentral()
+  maven {
+    url("${rootProject.projectDir}/../node_modules/react-native/android")
+  }
+}
+
+dependencies {
+  implementation 'com.facebook.react:react-native:+'
+}
