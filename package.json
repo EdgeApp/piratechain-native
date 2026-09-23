@@ -20,7 +20,7 @@
   },
   "author": "Pirate Chain Contributors",
   "license": "MIT",
-  "main": "src/index.js",
+  "main": "src/react-native.js",
   "types": "src/index.d.ts",
   "files": [
     "android/build.gradle",
@@ -36,7 +36,13 @@
     "README.md",
     "package.json",
     "react-native.config.js",
-    "react-native-pirate-wallet.podspec"
+    "react-native-pirate-wallet.podspec",
+    "node.js",
+    "node.d.ts",
+    "prebuilds/",
+    "rust/",
+    "ios/Frameworks/",
+    "android/src/main/jniLibs/"
   ],
   "scripts": {
     "test": "nyc mocha",
@@ -71,5 +77,23 @@
     "nyc": "^15.1.0",
     "sucrase": "^3.35.0",
     "typescript": "^5.4.5"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/react-native.js"
+    },
+    "./node": {
+      "types": "./src/node.d.ts",
+      "default": "./src/node.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "node": [
+        "node.d.ts"
+      ]
+    }
   }
 }
