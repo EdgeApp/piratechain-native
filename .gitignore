@@ -1,1 +1,11 @@
+node_modules/
+coverage/
+.nyc_output/
+tmp/
+
+# Native build outputs. These are produced by the build-native-* scripts and
+# shipped through `files` + `prepublishOnly`, never committed — the same
+# convention as zcash-native and monero-native.
 ios/Frameworks/PirateWalletNative.xcframework/
+android/src/main/jniLibs/
+prebuilds/

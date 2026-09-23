@@ -1,0 +1,12 @@
+{
+  "all": true,
+  "check-coverage": true,
+  "lines": 90,
+  "include": [
+    "src/react-native.js",
+    "src/node.js",
+    "src/load-addon.js"
+  ],
+  "reporter": ["text", "lcov"],
+  "report-dir": "coverage"
+}

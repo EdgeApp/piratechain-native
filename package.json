@@ -39,10 +39,12 @@
     "react-native-pirate-wallet.podspec"
   ],
   "scripts": {
-    "test": "node test/smoke.js",
+    "test": "nyc mocha",
+    "test:seed": "node test/smoke.js",
     "verify:package": "node scripts/verify-package.js",
     "prepare:native": "node scripts/assemble-ios-framework.js",
-    "prepack": "node scripts/verify-package.js --publish-layout"
+    "prepack": "node scripts/verify-package.js --publish-layout",
+    "verify": "npm run verify:package && npm run test:seed && npm test"
   },
   "engines": {
     "node": ">=18"
@@ -59,5 +61,10 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "chai": "^4.3.10",
+    "mocha": "^10.4.0",
+    "nyc": "^15.1.0"
   }
 }
