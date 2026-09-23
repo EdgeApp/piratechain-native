@@ -1,29 +1,3 @@
-function getNativeModule() {
-  let reactNative
-  try {
-    reactNative = require('react-native')
-  } catch (error) {
-    throw new Error(
-      'react-native is not available. Pass a native module explicitly when testing outside React Native.'
-    )
-  }
-
-  const nativeModule =
-    reactNative &&
-    reactNative.NativeModules &&
-    reactNative.NativeModules.PirateWalletReactNative
-
-  if (
-    nativeModule == null ||
-    typeof nativeModule.invoke !== 'function'
-  ) {
-    throw new Error(
-      'PirateWalletReactNative native module is not linked. Rebuild the app and check native installation.'
-    )
-  }
-  return nativeModule
-}
-
 const AMOUNT_WIRE_KEYS = new Set([
   'amount',
   'arrrtoshis',
@@ -502,8 +476,34 @@ class PirateWalletSynchronizer {
   }
 }
 
+/**
+ * Checks a transport before the SDK stores it.
+ *
+ * Every request goes through `invoke`, so a transport without it can do
+ * nothing and is rejected here. The two storage methods are optional, as they
+ * are upstream: a transport that only needs `invoke` — a test double, or a
+ * host that configures storage some other way — is valid, and calling a
+ * storage method it lacks fails at that call with its own error.
+ */
+function assertNativeModule(nativeModule) {
+  if (nativeModule == null) {
+    throw new Error(
+      'piratechain-native: a native module is required. Import from ' +
+        "'piratechain-native' for React Native or 'piratechain-native/node' for Node."
+    )
+  }
+  if (typeof nativeModule.invoke !== 'function') {
+    throw new Error(
+      'piratechain-native: the native module does not expose invoke. ' +
+        'Rebuild the app with the current native module.'
+    )
+  }
+  return nativeModule
+}
+
 class PirateWalletSdk {
-  constructor(nativeModule = getNativeModule()) {
+  constructor(nativeModule) {
+    assertNativeModule(nativeModule)
     this._native = nativeModule
     this.advancedKeyManagement = new PirateWalletAdvancedKeyManagement(this)
   }
@@ -1021,13 +1021,14 @@ class PirateWalletSdk {
   }
 }
 
-function createPirateWalletSdk() {
-  return new PirateWalletSdk()
+function createPirateWalletSdk(nativeModule) {
+  return new PirateWalletSdk(nativeModule)
 }
 
 module.exports = {
   PirateWalletSdk,
   PirateWalletSynchronizer,
   PirateWalletAdvancedKeyManagement,
+  assertNativeModule,
   createPirateWalletSdk
 }
