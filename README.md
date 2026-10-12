@@ -18,6 +18,76 @@ Repo-level build and integration notes:
 
 The JS surface mirrors the SDK boundary used by the native Android and iOS SDKs.
 
+## Networking
+
+The React Native SDK uses Direct networking and omits embedded Tor and I2P on
+both Android and iOS. It connects to the configured lightwalletd server without
+a transport setup call. Direct connections expose the device's IP address to
+the server and DNS provider. The consuming app owns its networking and privacy
+policy, including protection provided by its operating-system network
+environment. Tor and I2P integration belongs to Stashi's separate app build.
+
+## Smaller Android binary with external Sapling parameters
+
+The default Android companion packages embed the Sapling proving parameters and
+work without downloading additional files. Hosts that need a smaller APK can
+install `react-native-pirate-wallet-android-external` at the **same exact version**
+as this wrapper instead. Extract its `.tgz` from the React Native SDK archive in
+the GitHub release and install the local package:
+
+```bash
+npm install ./react-native-pirate-wallet-android-external-<wrapper-version>.tgz
+```
+
+Once that version is available on npm, it can also be installed by name:
+
+```bash
+npm install react-native-pirate-wallet-android-external@<wrapper-version>
+```
+
+Select it in the consuming app's `android/gradle.properties`:
+
+```properties
+pirateWalletAndroidBinaryPackage=react-native-pirate-wallet-android-external
+```
+
+This package contains ARM64, ARMv7 and x86_64 libraries without the embedded
+Sapling files. Selecting it excludes the regular embedded Android companion
+packages from the APK, even if npm installed them as optional dependencies.
+Do not package both variants of `libpirate_ffi_native.so`.
+
+Before signing any transaction, the host must download the two standard public
+parameter files using its own network and privacy policy, save them in app-private
+storage, and call the initializer below. This includes Ironwood-only transactions
+because the shared transaction builder loads the Sapling prover:
+
+```js
+await sdk.initializeSaplingParameters({
+  spendPath: `${appPrivateParamsDirectory}/sapling-spend.params`,
+  outputPath: `${appPrivateParamsDirectory}/sapling-output.params`
+})
+```
+
+Use absolute filesystem paths, not `file://` or `content://` URIs. Download each
+file to a temporary file and atomically rename it after the download completes;
+call initialization after both final files are ready. The SDK does not download
+files, bypass the host's transport settings, or require wallet credentials for
+this operation.
+
+| File | Public download | Bytes | SHA-256 |
+| --- | --- | ---: | --- |
+| `sapling-spend.params` | [download.z.cash](https://download.z.cash/downloads/sapling-spend.params) | 47,958,396 | `8e48ffd23abb3a5fd9c5589204f32d9c31285a04b78096ba40a79b75677efc13` |
+| `sapling-output.params` | [download.z.cash](https://download.z.cash/downloads/sapling-output.params) | 3,592,860 | `2f0ebbcbb9bb0bcffe95a397e7eba89c29eb4dde6191c339db88570e3f3fb0e4` |
+
+Rust verifies the exact sizes and hashes before parsing and caching the prover
+for the process. Before initialization succeeds, missing, incomplete or corrupted
+files reject the promise; replace the files and retry initialization. Repeated
+calls after success reuse the ready prover without reloading files. Embedded
+builds also accept this API, but do not require it. Keep the files for initialization
+after the app restarts. Once initialized, proving works offline. Receiving and
+syncing do not require these files. The public constants are shared across
+wallets and contain no keys, addresses or wallet data.
+
 ## Account-scoped wallet storage
 
 Configure wallet storage before any wallet operation. The recommended mobile
@@ -91,6 +161,7 @@ bash scripts/prepare-react-native-plugin.sh
 That copies:
 
 - Android JNI libraries into the two Android companion packages
+- external-parameter Android JNI libraries into the opt-in Android companion
 - the iOS device XCFramework slice and two thin simulator archives into the
   three iOS companion packages
 
@@ -142,6 +213,11 @@ Low-level entry points:
     - `buildDate`
     - `rustVersion`
     - `targetTriple`
+- `sdk.initializeSaplingParameters({ spendPath, outputPath })`
+  - RPC: `initialize_sapling_parameters`
+  - validates and caches host-provided Sapling proving files
+  - required by the external Android companion before any transaction signing, including Ironwood-only
+  - returns `{ acknowledged: true }`; rejects on unreadable or invalid files
 - `createPirateWalletSdk()`
   - returns a new `PirateWalletSdk` instance backed by the linked native module
 
@@ -291,7 +367,7 @@ const saved = await sdk.getLightdEndpointConfig(walletId)
 - `testLightdEndpoint({ url, tlsPin? })`
   - RPC: `test_node`
   - also accepts `testLightdEndpoint(url, tlsPin?)`
-  - tests through the currently selected Direct, Tor, SOCKS5, or I2P transport
+  - tests through the SDK's Direct transport
   - reports success, height, latency, transport, TLS/pin information, server
     version, chain name, and any connection error
 - `setLightdEndpoint({ walletId, url, tlsPin? })`
@@ -306,10 +382,10 @@ const saved = await sdk.getLightdEndpointConfig(walletId)
   - an empty `failoverEndpoints` array disables automatic failover
 
 Pool membership is validated by the backend before anything is persisted.
-Every member must resolve to the same recognized Pirate network, use the same
-clearnet, onion, or I2P route, and use the same HTTP/TLS security mode as the
-primary. The primary is removed from the alternate list and duplicate
-alternates are collapsed. A pinned primary cannot use automatic failover,
+Every member must resolve to the same recognized Pirate network and use the
+same route and HTTP/TLS security mode as the primary. SDK endpoints use
+clearnet routes through Direct networking. The primary is removed from the
+alternate list and duplicate alternates are collapsed. A pinned primary cannot use automatic failover,
 because one server's SPKI pin cannot authenticate unrelated servers; use
 `setLightdEndpoint()` when pinning a single server.
 
